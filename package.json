@@ -5,7 +5,7 @@
   "main": "js/server.js",
   "scripts": {
     "make": "./reemscript.sh",
-    "preinstall": "if [ -f '.emscripted_flag' ]; then exit; fi; ./emscript.sh;",
+    "preinstall": "",
     "prestart": "npm i",
     "start": "./node_modules/.bin/supervisor --watch js,js/listener --extensions js,html,data,dfa,dict --exec node js/server.js",
     "test": "echo 'Coming soon...'"

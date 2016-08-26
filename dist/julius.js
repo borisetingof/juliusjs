@@ -18,56 +18,35 @@
       };
     };
 
-    var initializeAudio = function(audio) {
-      audio.context = new (window.AudioContext || window.webkitAudioContext)();
-      audio.processor = audio.context.createScriptProcessor(4096, 1, 1);
-    };
-
-    var bootstrap = function(pathToDfa, pathToDict, options) {
+    var bootstrap = function(pathToDfa, pathToDict, stream, options) {
       var audio = this.audio;
       var recognizer = this.recognizer;
-      var terminate = this.terminate;
-      
-      // Compatibility
-      navigator.getUserMedia  = navigator.getUserMedia ||
-                          navigator.webkitGetUserMedia ||
-                          navigator.mozGetUserMedia ||
-                          navigator.msGetUserMedia;
 
-      navigator.getUserMedia(
-        { audio: true },
-        function(stream) {
-          audio.source = audio.context.createMediaStreamSource(stream);
-          audio.source.connect(audio.processor);
-          audio.processor.connect(audio.context.destination);
+      audio.source = stream;
+      audio.source.connect(audio.processor);
+      audio.processor.connect(audio.context.destination);
 
-          // Bootstrap the recognizer
-          recognizer.postMessage({
-            type: 'begin',
-            pathToDfa: pathToDfa,
-            pathToDict: pathToDict,
-            options: options
-          });
-        },
-        function(err) {
-          terminate();
-          console.error('JuliusJS failed: could not capture microphone input.');
-        }
-      );
+      // Bootstrap the recognizer
+      recognizer.postMessage({
+        type: 'begin',
+        pathToDfa: pathToDfa,
+        pathToDict: pathToDict,
+        options: options
+      });
     };
 
-    var Julius = function(pathToDfa, pathToDict, options) {
+    var Julius = function(pathToDfa, pathToDict, stream, context, options) {
       var that = this;
       options = options || {};
 
       // The context's nodemap: `source` -> `processor` -> `destination`
       this.audio = {
         // `AudioContext`
-        context:   null,
+        context:   context,
         // `AudioSourceNode` from captured microphone input
         source:    null,
         // `ScriptProcessorNode` for julius
-        processor: null,
+        processor: context.createScriptProcessor(4096, 1, 1),
         _transfer:  options.transfer
       };
 
@@ -103,8 +82,7 @@
         }
       };
 
-      initializeAudio(this.audio);
-      bootstrap.call(this, pathToDfa, pathToDict, options);
+      bootstrap.call(this, pathToDfa, pathToDict, stream, options);
     };
 
     Julius.prototype.onfirstpass = function(sentence) { /* noop */ };
